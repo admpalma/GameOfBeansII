@@ -4,3 +4,7 @@
 GameOfBeansII.iml
 
 out/
+
+target/
+
+.jqwik-database
