@@ -8,7 +8,7 @@ public class GameOfBeans {
 
     private final Player firstPlayer;
     private final int depth;
-    private final byte[] piles;
+    private byte[] piles;
 
     public GameOfBeans(Player firstPlayer, byte[] piles) {
         this(firstPlayer, DEFAULT_DEPTH, piles);
@@ -23,18 +23,16 @@ public class GameOfBeans {
     public int score() {
         switch (firstPlayer) {
             case JABA:
-                return scoreJaba(piles);
+                break;
             case PIETON:
                 short pietonWouldTake = pietonWouldTake(0, piles.length);
                 final int pietonPrefix = pietonWouldTake >>> Byte.SIZE;
                 final int pietonSuffix = (byte) pietonWouldTake;
-                return scoreJaba(Arrays.copyOfRange(piles, pietonPrefix, piles.length - pietonSuffix));
+                piles = Arrays.copyOfRange(piles, pietonPrefix, piles.length - pietonSuffix);
+                break;
             default:
                 throw new IllegalStateException("No firstPlayer");
         }
-    }
-
-    private short scoreJaba(byte[] piles) {
         //TODO use unidimensional array ~piles.length * min(piles.length, depth) sized
         //there is a pattern whereby each row has -1 length than the prior
         short[][] dp = new short[piles.length + 1][piles.length];
