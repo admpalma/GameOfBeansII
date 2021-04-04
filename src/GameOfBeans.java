@@ -6,7 +6,7 @@ public class GameOfBeans {
 
     enum Player {JABA, PIETON}
 
-    private Player firstPlayer;
+    private final Player firstPlayer;
     private final int depth;
     private final byte[] piles;
 
@@ -19,9 +19,22 @@ public class GameOfBeans {
         this.depth = depth;
         this.piles = piles;
     }
-
-    //TODO implement with Pieton as first player
+    
     public int score() {
+        switch (firstPlayer) {
+            case JABA:
+                return scoreJaba(piles);
+            case PIETON:
+                short pietonWouldTake = pietonWouldTake(0, piles.length);
+                final int pietonPrefix = pietonWouldTake >>> Byte.SIZE;
+                final int pietonSuffix = (byte) pietonWouldTake;
+                return scoreJaba(Arrays.copyOfRange(piles, pietonPrefix, piles.length - pietonSuffix));
+            default:
+                throw new IllegalStateException("No firstPlayer");
+        }
+    }
+
+    private short scoreJaba(byte[] piles) {
         //TODO use unidimensional array ~piles.length * min(piles.length, depth) sized
         //there is a pattern whereby each row has -1 length than the prior
         short[][] dp = new short[piles.length + 1][piles.length];
