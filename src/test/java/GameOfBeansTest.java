@@ -24,7 +24,7 @@ public class GameOfBeansTest {
         return Arbitraries.bytes()
                 .between((byte) -100, (byte) 100)
                 .filter(aByte -> aByte != 0)
-                .array(Byte[].class).ofMinSize(0).ofMaxSize(100);
+                .array(Byte[].class).ofMinSize(1).ofMaxSize(100);
     }
 
     static class GameOfBeansOracle {
