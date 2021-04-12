@@ -6,7 +6,7 @@ import java.util.Arrays;
 
 public class GameOfBeansTest {
 
-    @Property(tries = 10000)
+    @Property(tries = 10000, afterFailure = AfterFailureMode.SAMPLE_ONLY)
     void matchesOldImplementation(@ForAll GameOfBeans.Player firstPlayer,
                                   @ForAll @IntRange(min = 1, max = 10) int depth,
                                   @ForAll("piles") Byte[] piles) {
