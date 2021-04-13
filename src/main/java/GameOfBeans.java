@@ -7,14 +7,12 @@ public class GameOfBeans {
     private final Player firstPlayer;
     private final int depth;
     private byte[] piles;
-    private boolean pietonCaching;
     private int[][] pietonPrefixCache, pietonSuffixCache;
 
     public GameOfBeans(Player firstPlayer, int depth, byte[] piles) {
         this.firstPlayer = firstPlayer;
         this.depth = depth;
         this.piles = piles;
-        pietonCaching = false;
     }
 
     public int score() {
@@ -28,9 +26,9 @@ public class GameOfBeans {
             default:
                 throw new IllegalStateException("No firstPlayer");
         }
-        pietonCaching = true;
         pietonPrefixCache = new int[piles.length][depth];
         pietonSuffixCache = new int[piles.length][depth];
+        cachePietonPlays();
         //TODO use unidimensional array ~piles.length * min(piles.length, depth) sized
         //there is a pattern whereby each row has -1 length than the prior
         int dpRows = Math.min(piles.length + 1, 2 * depth);
@@ -76,9 +74,22 @@ public class GameOfBeans {
         return pietonPlay < 0 ? (byte) -pietonPlay : 0;
     }
 
+    private void cachePietonPlays() {
+        int maxPilesToRemove = Math.min(piles.length, depth);
+        for (int suffixIndex = 0; suffixIndex < maxPilesToRemove; suffixIndex++) {
+            cachePietonSuffixPlay(0, suffixIndex);
+        }
+        for (int prefixIndex = 0, suffixIndex = prefixIndex + maxPilesToRemove; suffixIndex <= piles.length; prefixIndex++, suffixIndex++) {
+            cachePietonPrefixPlay(prefixIndex, suffixIndex);
+            cachePietonSuffixPlay(prefixIndex, suffixIndex);
+        }
+        for (int prefixIndex = piles.length - maxPilesToRemove; prefixIndex <= piles.length; prefixIndex++) {
+            cachePietonPrefixPlay(prefixIndex, piles.length);
+        }
+    }
+
     /**
-     * Retrieves pieton plays from cache if possible,
-     * otherwise fills a full row of the cache and retrieves again
+     * Retrieves pieton plays from cache
      *
      * @param ignoredPrefix ignore before ignoredPrefix (exclusive)
      * @param ignoredSuffix ignore after ignoredSuffix (exclusive)
@@ -92,15 +103,37 @@ public class GameOfBeans {
         }
         int prefixPlay = pietonPrefixCache[ignoredPrefix][maxPilesToRemove - 1];
         int suffixPlay = pietonSuffixCache[ignoredSuffix - 1][maxPilesToRemove - 1];
-        if (prefixPlay == 0) {
-            pietonPrefixPlay(ignoredPrefix, Math.min(ignoredPrefix + depth, piles.length));
-        }
-        if (suffixPlay == 0) {
-            pietonSuffixPlay(Math.max(ignoredSuffix - depth, 0), ignoredSuffix);
-        }
-        prefixPlay = pietonPrefixCache[ignoredPrefix][maxPilesToRemove - 1];
-        suffixPlay = pietonSuffixCache[ignoredSuffix - 1][maxPilesToRemove - 1];
         return (byte) (toScore(prefixPlay) >= toScore(suffixPlay) ? -prefixPlay : suffixPlay);
+    }
+
+    private void cachePietonPrefixPlay(int ignoredPrefix, int ignoredSuffix) {
+        int pilesRemaining = ignoredSuffix - ignoredPrefix;
+        int maxPilesToRemove = Math.min(pilesRemaining, depth);
+        short totalScorePrefix = Short.MIN_VALUE;
+        byte maxPrefixRemoved = 0;
+        for (short removePrefix = 1, score = 0; removePrefix <= maxPilesToRemove; removePrefix++) {
+            score += piles[ignoredPrefix + (removePrefix - 1)];
+            if (score > totalScorePrefix) {
+                totalScorePrefix = score;
+                maxPrefixRemoved = (byte) removePrefix;
+            }
+            pietonPrefixCache[ignoredPrefix][removePrefix - 1] = toCacheFormat(totalScorePrefix, maxPrefixRemoved);
+        }
+    }
+
+    private void cachePietonSuffixPlay(int ignoredPrefix, int ignoredSuffix) {
+        int pilesRemaining = ignoredSuffix - ignoredPrefix;
+        int maxPilesToRemove = Math.min(pilesRemaining, depth);
+        short totalScoreSuffix = Short.MIN_VALUE;
+        byte maxSuffixRemoved = 0;
+        for (short removeSuffix = 1, score = 0; removeSuffix <= maxPilesToRemove; removeSuffix++) {
+            score += piles[ignoredSuffix - removeSuffix];
+            if (score > totalScoreSuffix) {
+                totalScoreSuffix = score;
+                maxSuffixRemoved = (byte) removeSuffix;
+            }
+            pietonSuffixCache[ignoredSuffix - 1][removeSuffix - 1] = toCacheFormat(totalScoreSuffix, maxSuffixRemoved);
+        }
     }
 
     private short toScore(int pietonCacheEntry) {
@@ -112,7 +145,6 @@ public class GameOfBeans {
     }
 
     /**
-     * If caching is enabled also caches the intermediary results
      *
      * @param ignoredPrefix ignore before ignoredPrefix (exclusive)
      * @param ignoredSuffix ignore after ignoredSuffix (exclusive)
@@ -135,9 +167,6 @@ public class GameOfBeans {
                 totalScorePrefix = score;
                 maxPrefixRemoved = (byte) removePrefix;
             }
-            if (pietonCaching) {
-                pietonPrefixCache[ignoredPrefix][removePrefix - 1] = toCacheFormat(totalScorePrefix, maxPrefixRemoved);
-            }
         }
         return toCacheFormat(totalScorePrefix, maxPrefixRemoved);
     }
@@ -152,9 +181,6 @@ public class GameOfBeans {
             if (score > totalScoreSuffix) {
                 totalScoreSuffix = score;
                 maxSuffixRemoved = (byte) removeSuffix;
-            }
-            if (pietonCaching) {
-                pietonSuffixCache[ignoredSuffix - 1][removeSuffix - 1] = toCacheFormat(totalScoreSuffix, maxSuffixRemoved);
             }
         }
         return toCacheFormat(totalScoreSuffix, maxSuffixRemoved);
