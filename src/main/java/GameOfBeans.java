@@ -16,6 +16,7 @@ public class GameOfBeans {
     }
 
     public int score() {
+		// If Pieton plays first, change the game to a subset where JABA plays first, since Pieton is easy to calc first move
         switch (firstPlayer) {
             case JABA:
                 break;
@@ -30,7 +31,7 @@ public class GameOfBeans {
         pietonSuffixCache = new int[piles.length][depth];
         cachePietonPlays();
         //TODO use unidimensional array ~piles.length * min(piles.length, depth) sized
-        //there is a pattern whereby each row has -1 length than the prior
+        //There is a pattern whereby each row has -1 length than the prior, making a stair type pattern
         int dpRows = Math.min(piles.length + 1, 2 * depth);
         short[][] dp = new short[dpRows][piles.length];
         dp[0] = new short[piles.length + 1];
@@ -106,6 +107,8 @@ public class GameOfBeans {
         return (byte) (toScore(prefixPlay) >= toScore(suffixPlay) ? -prefixPlay : suffixPlay);
     }
 
+
+	// Its preferable to spend a little memory on two functions to not have branching if statements here
     private void cachePietonPrefixPlay(int ignoredPrefix, int ignoredSuffix) {
         int pilesRemaining = ignoredSuffix - ignoredPrefix;
         int maxPilesToRemove = Math.min(pilesRemaining, depth);
