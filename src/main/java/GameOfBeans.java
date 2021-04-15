@@ -30,41 +30,41 @@ public class GameOfBeans {
         pietonPrefixCache = new int[piles.length][depth];
         pietonSuffixCache = new int[piles.length][depth];
         cachePietonPlays();
-        //TODO use unidimensional array ~piles.length * min(piles.length, depth) sized
+        //could use unidimensional array ~piles.length * min(piles.length, depth) sized
         //There is a pattern whereby each row has -1 length than the prior, making a stair type pattern
-        int dpRows = Math.min(piles.length + 1, 2 * depth);
-        short[][] dp = new short[dpRows][piles.length];
-        dp[0] = new short[piles.length + 1];
+        int rows = Math.min(piles.length + 1, 2 * depth);
+        short[][] score = new short[rows][piles.length];
+        score[0] = new short[piles.length + 1];
         for (int i = 0; i < piles.length; i++) {
-            dp[1][i] = piles[i];
+            score[1][i] = piles[i];
         }
-        for (int i = 2; i < dpRows; i++) {
-            Arrays.fill(dp[i], Short.MIN_VALUE);
+        for (int i = 2; i < rows; i++) {
+            Arrays.fill(score[i], Short.MIN_VALUE);
         }
 
         for (int length = 2; length <= piles.length; length++) {
             for (int prefixIndex = 0, suffixIndex = prefixIndex + length; suffixIndex <= piles.length; prefixIndex++, suffixIndex++) {
                 int maxPilesToRemove = Math.min(length, depth);
-                short score = Short.MIN_VALUE;
+                short maxScore = Short.MIN_VALUE;
                 for (int removed = 1, prefixScore = 0, suffixScore = 0; removed <= maxPilesToRemove; removed++) {
                     prefixScore += piles[prefixIndex + (removed - 1)];
                     byte pietonPlay = pietonPlayCached(prefixIndex + removed, suffixIndex);
                     byte pietonPrefix = toPrefix(pietonPlay);
                     int removedPiles = removed + pietonPrefix + toSuffix(pietonPlay);
-                    score = (short) Math.max(score,
-                            dp[(length - removedPiles) % dpRows][prefixIndex + removed + pietonPrefix] + prefixScore);
+                    maxScore = (short) Math.max(maxScore,
+                            score[(length - removedPiles) % rows][prefixIndex + removed + pietonPrefix] + prefixScore);
 
                     suffixScore += piles[suffixIndex - removed];
                     pietonPlay = pietonPlayCached(prefixIndex, suffixIndex - removed);
                     pietonPrefix = toPrefix(pietonPlay);
                     removedPiles = removed + pietonPrefix + toSuffix(pietonPlay);
-                    score = (short) Math.max(score,
-                            dp[(length - removedPiles) % dpRows][prefixIndex + pietonPrefix] + suffixScore);
+                    maxScore = (short) Math.max(maxScore,
+                            score[(length - removedPiles) % rows][prefixIndex + pietonPrefix] + suffixScore);
                 }
-                dp[length % dpRows][prefixIndex] = score;
+                score[length % rows][prefixIndex] = maxScore;
             }
         }
-        return dp[piles.length % dpRows][0];
+        return score[piles.length % rows][0];
     }
 
     private byte toSuffix(byte pietonPlay) {
@@ -143,6 +143,14 @@ public class GameOfBeans {
         return (short) (pietonCacheEntry >> Short.SIZE);
     }
 
+    /**
+     * Encodes the given score on an int with the following pattern: 0xff00
+     * and the number of removed piles with the following pattern: 0x000f
+     * (independent of prefix vs suffix play)
+     * @param score this Pieton play score
+     * @param removed this Pieton play removed piles
+     * @return encoded Pieton play
+     */
     private int toCacheFormat(short score, byte removed) {
         return (score << Short.SIZE) + removed;
     }
