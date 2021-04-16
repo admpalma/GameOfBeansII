@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <title>tex texample</title>
+</head>
+<body>
+    $$score(L)(i) =\left\{\begin{matrix}
+0, & L=0\\
+piles[i], & L=1\\
+max(prefixScore(L,i,1..k), suffixScore(L,i,1..k))& L \geq 2\\
+\end{matrix}\right.\\
+prefixScore(L,i,k)=\sum_{t=1}^{k}(piles[i+t])+score(L-k-pilesPieton(i+k,i+L))(i+k+prefixPilesPieton(i+k,i+L))\\
+suffixScore(L,i,k)=\sum_{t=1}^{k}(piles[i+L-t])+score(L-k-pilesPieton(i,i+L-k))(i+prefixPilesPieton(i,i+L-k))\\
+k \leq min(L,D)\\
+\sum_{L=2}^{P}\sum_{i=0}^{P-L}\sum_{r=1}^{min(L,D)}1=
+\sum_{L=2}^{P}\sum_{i=0}^{P-L}min(L,D)=
+\sum_{L=2}^{P}(P-L+1)*min(L,D)\overset{P>>D}{\rightarrow}
+\sum_{L=2}^{P}(P-L+1)*D=\\
+D*(\sum_{L=2}^{P}(P)-\sum_{L=2}^{P}(L)+\sum_{L=2}^{P}(1))=
+D*(2P*\sum_{L=2}^{P}(1)-\sum_{L=2}^{P}(L))=
+D*(2P*(P-1)-\frac{P(P-1)}{2})=\\
+D*(2P^{2}-2P-\frac{P^{2}-P}{2})=
+D*(\frac{P^{2}-P}{2})=
+O(P^{2}D)$$
+</body>
+</html>
